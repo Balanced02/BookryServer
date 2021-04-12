@@ -1,0 +1,16 @@
+{
+  "name": "bookry-server",
+  "version": "0.0.1",
+  "description": "Bookry server",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://Balanced02@bitbucket.org/Balanced02/bookry-server.git"
+  },
+  "author": "Balanced02 (adebalanced02@gmail.com)",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/Balanced02/bookry-server#readme"
+}
