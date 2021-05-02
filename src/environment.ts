@@ -3,6 +3,9 @@ declare global {
     interface ProcessEnv {
       MONGODB_URI: string;
       PORT: string;
+      jwtSecret: string;
+      email: string;
+      password: string;
     }
   }
 }
