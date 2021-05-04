@@ -13,6 +13,7 @@ import confirmEmailTemplate from "../mailing/confirmEmail";
 
 const router = Router();
 
+// Registration Route
 router.post("/register", registerValidator, async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -26,7 +27,7 @@ router.post("/register", registerValidator, async (req: Request, res: Response) 
     if (isUserCreated) {
       return res
         .status(409)
-        .json({ message: "A user with that email address already exists" });
+        .json({ message: "A user with that Email address already exists" });
     }
     newUser.password = bcrypt.hashSync(req.body.password, 10);
     newUser.save((err: CallbackError, user: IUser) => {
@@ -36,7 +37,7 @@ router.post("/register", registerValidator, async (req: Request, res: Response) 
         });
       } else {
         mailingService("Confirm Email", confirmEmailTemplate('www.google.com'), email)
-        user.password = '';
+        user.password = "";
         let token = jwt.sign(
           { email: user.email, fullName: user.fullName, _id: user._id },
           process.env.jwtSecret
@@ -51,6 +52,29 @@ router.post("/register", registerValidator, async (req: Request, res: Response) 
 });
 
 
-
+// Login Route
+router.post("/login", loginValidator, async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(formatValidationMessages(errors.array()));
+  }
+  let user = await User.findOne({ email: req.body.email });
+  if (!user || !user.comparePassword(req.body.password)) {
+    return res.status(401).json({
+      message: "Authentication failed, invalid Email or Password.",
+    });
+  } else {
+    return res.json({
+      token: jwt.sign(
+        { email: user.email, fullname: user.fullName, _id: user._id }
+        , process.env.jwtSecret
+      ),
+      user: user,
+      message: user.isEmailVerified
+        ? `Welcome ${user.fullName}`
+        : `${user.fullName}, Please verify your account `
+    });
+  }
+});
 
 export default router;
