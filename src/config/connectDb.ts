@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const option = {
   socketTimeoutMS: 30000,
@@ -6,13 +6,15 @@ const option = {
   reconnectTries: 30000,
 };
 
-const connectDb = () => {
-  mongoose
-    .connect(process.env.MONGODB_URI, option)
-    .then(() => {
-      console.log("Database connected successfully");
-    })
-    .catch((err) => console.error(err));
+const connectDb = async (): Promise<void> => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, option);
+    // eslint-disable-next-line no-console
+    console.log('Database connected successfully');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(error);
+  }
 };
 
 export default connectDb;

@@ -5,9 +5,9 @@ async function mailingService(
   subject: string,
   template: string,
   receiver: string,
-) {
+): Promise<void> {
   // create reusable transporter object using the default SMTP transport
-  var transporter = nodemailer.createTransport({
+  const transporter = nodemailer.createTransport({
     host: 'mail.privateemail.com',
     port: 587,
     secure: false,
@@ -18,10 +18,10 @@ async function mailingService(
   });
 
   // send mail with defined transport object
-  let info = await transporter.sendMail({
+  await transporter.sendMail({
     from: `Bookry Club ${process.env.email}`, // sender address
     to: receiver, // list of receivers
-    subject: subject,
+    subject,
     html: template, // html body
   });
 }

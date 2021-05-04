@@ -1,8 +1,8 @@
-import express, { Application, Request, Response, NextFunction } from "express";
-import router from "./routes/v1";
-import dotenv from "dotenv";
-import connectDb from "./config/connectDb";
-import "./environment";
+import express, { Application, Request, Response } from 'express';
+import dotenv from 'dotenv';
+import router from './routes/v1';
+import connectDb from './config/connectDb';
+import './environment';
 
 dotenv.config();
 
@@ -12,12 +12,13 @@ connectDb();
 
 app.use(express.json());
 
-app.use("/api/v1", router);
+app.use('/api/v1', router);
 
-app.use("*", (req: Request, res: Response) => {
-  res.status(400).json({ message: "Invalid_Url" });
+app.use('*', (req: Request, res: Response) => {
+  res.status(400).json({ message: 'Invalid_Url' });
 });
 
 const PORT = process.env.PORT || 8000;
 
+// eslint-disable-next-line no-console
 app.listen(PORT, () => console.log(`Bookry Running on port ${PORT}`));

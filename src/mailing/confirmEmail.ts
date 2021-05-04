@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const confirmEmailTemplate = (confirmationLink: string) => `<html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
