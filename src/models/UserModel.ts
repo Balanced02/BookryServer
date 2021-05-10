@@ -40,6 +40,7 @@ const UserSchema = new Schema<IUser>({
   },
 });
 
+// eslint-disable-next-line func-names
 UserSchema.methods.comparePassword = function (password) {
   return bcrypt.compareSync(password, this.password);
 };

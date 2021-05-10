@@ -1,16 +1,16 @@
-import { check } from "express-validator";
+import { check } from 'express-validator';
 
 const registerValidator = [
-    check("fullName").notEmpty().withMessage("Please provide Full Name"),
-    check("email").isEmail().withMessage("Please provide a valid Email address"),
-    check("password")
-    .isLength({ min: 8})
-    .withMessage("Password must be a minimum of 8 characters")
+  check('fullName').notEmpty().withMessage('Please provide Full Name'),
+  check('email').isEmail().withMessage('Please provide a valid Email address'),
+  check('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be a minimum of 8 characters')
     .matches(/\d/)
-    .withMessage("Password must contain a number")
+    .withMessage('Password must contain a number')
     .not()
-    .isIn(["123456", "password", "god"])
-    .withMessage("Password to easy to guess, use something stronger ")
+    .isIn(['123456', 'password', 'god'])
+    .withMessage('Password to easy to guess, use something stronger '),
 ];
 
 export default registerValidator;

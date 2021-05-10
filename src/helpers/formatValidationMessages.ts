@@ -1,10 +1,11 @@
 interface ValidationMessage {
-    msg: string
+  msg: string;
 }
 
-interface ValidationMessageItems extends Array<ValidationMessage>{}
+type ValidationMessageItems = Array<ValidationMessage>;
 
-const formatValidationMessages = (messageArray: ValidationMessageItems) =>
-    messageArray.map((message) => message.msg);
+const formatValidationMessages = (
+  messageArray: ValidationMessageItems,
+): string[] => messageArray.map((message) => message.msg);
 
 export default formatValidationMessages;
