@@ -5,8 +5,8 @@ export interface IUser extends Document {
   fullName: string;
   email: string;
   password: string;
-  isEmailRegistered: boolean;
-  userType: 'authors' | 'editors' | 'readers';
+  isEmailVerified: boolean;
+  userType: 'author' | 'editor' | 'reader';
 }
 
 const UserSchema = new Schema<IUser>({
@@ -31,8 +31,8 @@ const UserSchema = new Schema<IUser>({
   },
   userType: {
     type: String,
-    default: 'readers',
-    enum: ['authors', 'editors', 'readers'],
+    default: 'reader',
+    enum: ['author', 'editor', 'reader'],
   },
   created: {
     type: Date,

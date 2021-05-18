@@ -33,7 +33,6 @@ router.post(
 
       const salt: string = await bcrypt.genSalt(10);
 
-      // console.log(salt);
       user.password = bcrypt.hashSync(password, salt);
 
       user.save();
@@ -63,7 +62,6 @@ router.post(
   },
 );
 
-// Login Route
 router.post('/login', loginValidator, async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
