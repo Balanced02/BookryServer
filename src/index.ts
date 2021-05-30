@@ -1,12 +1,18 @@
 import express, { Application, Request, Response } from 'express';
+import session from 'express-session';
 import dotenv from 'dotenv';
 import router from './routes/v1';
 import connectDb from './config/connectDb';
 import './environment';
 
 dotenv.config();
-
 const app: Application = express();
+
+app.use(session({
+  secret: process.env.sessionSecret || 'Unknown @ Sec',
+  resave: false,
+  saveUninitialized: true,
+}));
 
 connectDb();
 

@@ -10,6 +10,12 @@ import loginValidator from '../validators/loginValidator';
 import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 
+declare module 'express-session' {
+  interface Session {
+    verificationCode: number;
+  }
+}
+
 const router: Router = Router();
 
 router.post(
@@ -37,9 +43,13 @@ router.post(
 
       user.save();
 
+      const verificationCode = Math.floor(Math.random() * 100000);
+
+      req.session.verificationCode = verificationCode;
+
       mailingService(
         'Confirm Email',
-        confirmEmailTemplate('www.google.com'),
+        confirmEmailTemplate(verificationCode),
         email,
       );
 
