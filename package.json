@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^6.4.1",
+    "@sentry/tracing": "^6.4.1",
     "@types/bcrypt": "^3.0.1",
     "@types/mongoose": "^5.10.5",
     "@types/nodemailer": "^6.4.1",
