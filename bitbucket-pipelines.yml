@@ -1,0 +1,12 @@
+image: node:14.17.0
+
+pipelines:
+  branches:
+    development:
+      - step:
+          caches:
+            - node
+          script:
+            - npm install
+            - npm run build
+            - git push -f https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_PRODUCTION.git development:master
