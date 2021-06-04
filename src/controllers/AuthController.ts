@@ -9,6 +9,7 @@ import registerValidator from '../validators/registerValidator';
 import loginValidator from '../validators/loginValidator';
 import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
+import emailNotVerified from '../middlewares/emailNotVerified';
 
 declare module 'express-session' {
   interface Session {
@@ -16,6 +17,13 @@ declare module 'express-session' {
   }
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
 const router: Router = Router();
 
 router.post(
@@ -41,7 +49,7 @@ router.post(
 
       user.password = bcrypt.hashSync(password, salt);
 
-      user.save();
+      await user.save();
 
       const verificationCode = Math.floor(Math.random() * 100000);
 
@@ -86,6 +94,8 @@ router.post('/login', loginValidator, async (req: Request, res: Response) => {
     });
   }
 
+  user.password = '';
+
   const payload = {
     id: user._id,
     email: user.email,
@@ -100,5 +110,33 @@ router.post('/login', loginValidator, async (req: Request, res: Response) => {
       : `${user.fullName}, Please verify your account `,
   });
 });
+
+router.post(
+  '/verifyEmail',
+  emailNotVerified,
+  async (req: Request, res: Response) => {
+    if (
+      req.session.verificationCode && Number(req.body.verificationCode)
+      === Number(req.session.verificationCode)
+    ) {
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $set: {
+            isEmailVerified: true,
+          },
+        },
+        {
+          new: true,
+        },
+      );
+      user.password = '';
+
+      res.status(200).json({ message: 'Email Verified Successfully!', user });
+    } else {
+      res.status(400).json({ message: 'Wrong Code Provided' });
+    }
+  },
+);
 
 export default router;

@@ -15,6 +15,7 @@ const authWithEmailVerified = async (
     );
     if (verifiedToken) {
       const user = await User.findById(verifiedToken.id);
+      req.user = user;
       if (user.isEmailVerified) {
         next();
       } else {
