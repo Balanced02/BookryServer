@@ -81,34 +81,38 @@ router.post(
 );
 
 router.post('/login', loginValidator, async (req: Request, res: Response) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json(formatValidationMessages(errors.array()));
-  }
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json(formatValidationMessages(errors.array()));
+    }
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-  if (!user || !user.comparePassword(password)) {
-    return res.status(401).json({
-      message: 'Authentication failed, invalid Email or Password.',
+    if (!user || !user.comparePassword(password)) {
+      return res.status(401).json({
+        message: 'Authentication failed, invalid Email or Password.',
+      });
+    }
+
+    user.password = '';
+
+    const payload = {
+      id: user._id,
+      email: user.email,
+      userType: user.userType,
+    };
+
+    return res.status(200).json({
+      token: jwt.sign(payload, process.env.jwtSecret, { expiresIn: 15768000 }),
+      user,
+      message: user.isEmailVerified
+        ? `Welcome ${user.fullName}`
+        : `${user.fullName}, Please verify your account `,
     });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
   }
-
-  user.password = '';
-
-  const payload = {
-    id: user._id,
-    email: user.email,
-    userType: user.userType,
-  };
-
-  return res.status(200).json({
-    token: jwt.sign(payload, process.env.jwtSecret, { expiresIn: 15768000 }),
-    user,
-    message: user.isEmailVerified
-      ? `Welcome ${user.fullName}`
-      : `${user.fullName}, Please verify your account `,
-  });
 });
 
 router.post(
@@ -138,5 +142,23 @@ router.post(
     }
   },
 );
+
+router.get('/resendCode', emailNotVerified, async (req: Request, res: Response) => {
+  try {
+    const { email } = req.user;
+    const verificationCode = Math.floor(Math.random() * 100000);
+    req.session.verificationCode = verificationCode;
+    mailingService(
+      'Confirm Email',
+      confirmEmailTemplate(verificationCode),
+      email,
+    );
+    return res
+      .status(200)
+      .json({ message: 'Verification code sent succesfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
+  }
+});
 
 export default router;
