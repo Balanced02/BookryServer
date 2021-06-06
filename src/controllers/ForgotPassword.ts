@@ -115,7 +115,7 @@ router.post(
           : `${user.fullName}, Please verify your account `,
       });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error' });
+      return res.status(500).json({ message: 'Server error', error });
     }
   },
 );
