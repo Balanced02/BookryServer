@@ -138,14 +138,14 @@ router.post(
         user.password = '';
         return res.status(200).json({ message: 'Email Verified Successfully!', user });
       }
-    } catch (error) {
       return res
         .status(400)
-        .json({ message: 'Wrong code provided', error });
+        .json({ message: 'Please provide a correct code' });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: 'Something went wrong! please try again later', error });
     }
-    return res
-      .status(400)
-      .json({ message: 'Please provide a correct code' });
   },
 );
 
