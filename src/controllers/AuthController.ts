@@ -119,27 +119,33 @@ router.post(
   '/verifyEmail',
   emailNotVerified,
   async (req: Request, res: Response) => {
-    if (
-      req.session.verificationCode && Number(req.body.verificationCode)
-      === Number(req.session.verificationCode)
-    ) {
-      const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $set: {
-            isEmailVerified: true,
+    try {
+      if (
+        req.session.verificationCode && Number(req.body.verificationCode)
+        === Number(req.session.verificationCode)
+      ) {
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              isEmailVerified: true,
+            },
           },
-        },
-        {
-          new: true,
-        },
-      );
-      user.password = '';
-
-      res.status(200).json({ message: 'Email Verified Successfully!', user });
-    } else {
-      res.status(400).json({ message: 'Wrong Code Provided' });
+          {
+            new: true,
+          },
+        );
+        user.password = '';
+        return res.status(200).json({ message: 'Email Verified Successfully!', user });
+      }
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: 'Wrong code provided', error });
     }
+    return res
+      .status(400)
+      .json({ message: 'Please provide a correct code' });
   },
 );
 
