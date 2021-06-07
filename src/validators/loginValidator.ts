@@ -1,10 +1,11 @@
 import { check } from 'express-validator';
 
-const loginValidator = [
-  check('email').isEmail().withMessage('Please provide a valid email address'),
-  check('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be a minimum of 8 characters'),
-];
+const emailValidator = check('email')
+  .isEmail()
+  .withMessage('Please provide a valid email address');
 
-export default loginValidator;
+const passwordValidator = check('password')
+  .isLength({ min: 8 })
+  .withMessage('Password must be a minimum of 8 characters');
+
+export default { emailValidator, passwordValidator };
