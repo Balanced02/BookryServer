@@ -5,11 +5,10 @@ import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
-import registerValidator from '../validators/registerValidator';
-import loginValidator from '../validators/loginValidator';
 import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
+import validators from '../validators/validators';
 
 declare module 'express-session' {
   interface Session {
@@ -21,15 +20,27 @@ declare module 'express-session' {
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user: {
+        _id: string;
+        fullName: string;
+        email: string;
+        password: string;
+        isEmailVerified: boolean;
+        userType: 'author' | 'editor' | 'reader';
+      };
     }
   }
 }
+
 const router: Router = Router();
 
 router.post(
   '/register',
-  registerValidator,
+  [
+    validators.emailValidator,
+    validators.passwordValidator,
+    validators.fullNameValidator,
+  ],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -83,36 +94,42 @@ router.post(
 
 router.post(
   '/login',
-  [loginValidator.emailValidator, loginValidator.passwordValidator],
+  [validators.emailValidator],
   async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(formatValidationMessages(errors.array()));
-    }
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json(formatValidationMessages(errors.array()));
+      }
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
 
-    if (!user || !user.comparePassword(password)) {
-      return res.status(401).json({
-        message: 'Authentication failed, invalid Email or Password.',
+      if (!user || !user.comparePassword(password)) {
+        return res.status(401).json({
+          message: 'Authentication failed, invalid Email or Password.',
+        });
+      }
+
+      user.password = '';
+
+      const payload = {
+        id: user._id,
+        email: user.email,
+        userType: user.userType,
+      };
+
+      return res.status(200).json({
+        token: jwt.sign(payload, process.env.jwtSecret, {
+          expiresIn: 15768000,
+        }),
+        user,
+        message: user.isEmailVerified
+          ? `Welcome ${user.fullName}`
+          : `${user.fullName}, Please verify your account `,
       });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error', error });
     }
-
-    user.password = '';
-
-    const payload = {
-      id: user._id,
-      email: user.email,
-      userType: user.userType,
-    };
-
-    return res.status(200).json({
-      token: jwt.sign(payload, process.env.jwtSecret, { expiresIn: 15768000 }),
-      user,
-      message: user.isEmailVerified
-        ? `Welcome ${user.fullName}`
-        : `${user.fullName}, Please verify your account `,
-    });
   },
 );
 
@@ -120,33 +137,41 @@ router.post(
   '/verifyEmail',
   emailNotVerified,
   async (req: Request, res: Response) => {
-    if (
-      req.session.verificationCode &&
-      Number(req.body.verificationCode) === Number(req.session.verificationCode)
-    ) {
-      const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $set: {
-            isEmailVerified: true,
+    try {
+      if (
+        req.session.verificationCode &&
+        Number(req.body.verificationCode) ===
+          Number(req.session.verificationCode)
+      ) {
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              isEmailVerified: true,
+            },
           },
-        },
-        {
-          new: true,
-        },
-      );
-      user.password = '';
-
-      res.status(200).json({ message: 'Email Verified Successfully!', user });
-    } else {
-      res.status(400).json({ message: 'Wrong Code Provided' });
+          {
+            new: true,
+          },
+        );
+        user.password = '';
+        return res
+          .status(200)
+          .json({ message: 'Email Verified Successfully!', user });
+      }
+      return res.status(400).json({ message: 'Please provide a correct code' });
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Something went wrong! please try again later',
+        error,
+      });
     }
   },
 );
 
 router.post(
   '/recoverPassword',
-  [loginValidator.emailValidator],
+  [validators.emailValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -181,19 +206,26 @@ router.post(
 );
 
 router.post('/verifyCode', (req: Request, res: Response) => {
-  if (
-    req.session.resetCode &&
-    Number(req.body.resetCode) === Number(req.session.resetCode)
-  ) {
-    res.status(200).json({ message: 'Verified sucessfully' });
-  } else {
-    res.status(400).json({ message: 'Wrong reset code provided' });
+  try {
+    if (
+      req.session.resetCode &&
+      Number(req.body.resetCode) === Number(req.session.resetCode)
+    ) {
+      res.status(200).json({ message: 'Verified sucessfully' });
+    } else {
+      res.status(400).json({ message: 'Wrong reset code provided' });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Something went wrong! please try again later',
+      error,
+    });
   }
 });
 
 router.post(
   '/resetPassword/:code',
-  [loginValidator.emailValidator, loginValidator.passwordValidator],
+  [validators.emailValidator, validators.passwordValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
