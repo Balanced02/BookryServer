@@ -9,6 +9,7 @@ import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
 import validators from '../validators/validators';
+import validateToken from '../middlewares/validateToken';
 
 declare module 'express-session' {
   interface Session {
@@ -171,6 +172,42 @@ router.get('/resendCode', emailNotVerified, async (req: Request, res: Response) 
       .json({ message: 'Verification code sent succesfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
+  }
+});
+
+router.post('/changePassword', validateToken, [validators.passwordValidator], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json(formatValidationMessages(errors.array()));
+    }
+    const { oldPassword, password } = req.body;
+    const findUser = await User.findById(req.user._id);
+    if (findUser.comparePassword(oldPassword)) {
+      const salt: string = await bcrypt.genSalt(10);
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $set: {
+            password: bcrypt.hashSync(password, salt),
+          },
+        },
+        {
+          new: true,
+        },
+      );
+      user.password = '';
+      return res
+        .status(200)
+        .json({ message: 'Password changed succesfully', user });
+    }
+    return res
+      .status(400)
+      .json({ message: 'Enter a valid password and try again.' });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong trying to change your password please try again later', error });
   }
 });
 
