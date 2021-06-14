@@ -5,11 +5,10 @@ import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
-import registerValidator from '../validators/registerValidator';
-import loginValidator from '../validators/loginValidator';
 import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
+import validators from '../validators/validators';
 
 declare module 'express-session' {
   interface Session {
@@ -20,15 +19,23 @@ declare module 'express-session' {
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user: {
+        _id: string;
+        fullName: string;
+        email: string;
+        password: string;
+        isEmailVerified: boolean;
+        userType: 'author' | 'editor' | 'reader';
+      };
     }
   }
 }
+
 const router: Router = Router();
 
 router.post(
   '/register',
-  registerValidator,
+  [validators.emailValidator, validators.passwordValidator, validators.fullNameValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -80,7 +87,7 @@ router.post(
   },
 );
 
-router.post('/login', loginValidator, async (req: Request, res: Response) => {
+router.post('/login', [validators.emailValidator, validators.passwordValidator], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
