@@ -146,7 +146,7 @@ router.post(
 
 router.post(
   '/recoverPassword',
-  loginValidator.emailValidator,
+  [loginValidator.emailValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -210,11 +210,19 @@ router.post(
 
       delete req.session.resetCode;
 
-      const user = await User.findOne({ email });
-
       const salt: string = await bcrypt.genSalt(10);
 
-      user.password = await bcrypt.hash(password, salt);
+      const user = await User.findOneAndUpdate(
+        email,
+        {
+          $set: {
+            password: await bcrypt.hash(password, salt),
+          },
+        },
+        {
+          new: true,
+        },
+      );
 
       await user.save();
 
