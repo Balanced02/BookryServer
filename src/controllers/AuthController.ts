@@ -87,7 +87,7 @@ router.post(
   },
 );
 
-router.post('/login', [validators.emailValidator, validators.passwordValidator], async (req: Request, res: Response) => {
+router.post('/login', [validators.emailValidator], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
