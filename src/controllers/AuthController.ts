@@ -5,11 +5,11 @@ import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
-import registerValidator from '../validators/registerValidator';
-import loginValidator from '../validators/loginValidator';
 import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
+import validators from '../validators/validators';
+import validateToken from '../middlewares/validateToken';
 
 declare module 'express-session' {
   interface Session {
@@ -20,15 +20,23 @@ declare module 'express-session' {
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user: {
+        _id: string;
+        fullName: string;
+        email: string;
+        password: string;
+        isEmailVerified: boolean;
+        userType: 'author' | 'editor' | 'reader';
+      };
     }
   }
 }
+
 const router: Router = Router();
 
 router.post(
   '/register',
-  registerValidator,
+  [validators.emailValidator, validators.passwordValidator, validators.fullNameValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -80,7 +88,7 @@ router.post(
   },
 );
 
-router.post('/login', loginValidator, async (req: Request, res: Response) => {
+router.post('/login', [validators.emailValidator], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -119,26 +127,32 @@ router.post(
   '/verifyEmail',
   emailNotVerified,
   async (req: Request, res: Response) => {
-    if (
-      req.session.verificationCode && Number(req.body.verificationCode)
-      === Number(req.session.verificationCode)
-    ) {
-      const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $set: {
-            isEmailVerified: true,
+    try {
+      if (
+        req.session.verificationCode && Number(req.body.verificationCode)
+        === Number(req.session.verificationCode)
+      ) {
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              isEmailVerified: true,
+            },
           },
-        },
-        {
-          new: true,
-        },
-      );
-      user.password = '';
-
-      res.status(200).json({ message: 'Email Verified Successfully!', user });
-    } else {
-      res.status(400).json({ message: 'Wrong Code Provided' });
+          {
+            new: true,
+          },
+        );
+        user.password = '';
+        return res.status(200).json({ message: 'Email Verified Successfully!', user });
+      }
+      return res
+        .status(400)
+        .json({ message: 'Please provide a correct code' });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: 'Something went wrong! please try again later', error });
     }
   },
 );
@@ -158,6 +172,42 @@ router.get('/resendCode', emailNotVerified, async (req: Request, res: Response) 
       .json({ message: 'Verification code sent succesfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Server error', error });
+  }
+});
+
+router.post('/changePassword', validateToken, [validators.passwordValidator], async (req: Request, res: Response) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json(formatValidationMessages(errors.array()));
+    }
+    const { oldPassword, password } = req.body;
+    const findUser = await User.findById(req.user._id);
+    if (findUser.comparePassword(oldPassword)) {
+      const salt: string = await bcrypt.genSalt(10);
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $set: {
+            password: bcrypt.hashSync(password, salt),
+          },
+        },
+        {
+          new: true,
+        },
+      );
+      user.password = '';
+      return res
+        .status(200)
+        .json({ message: 'Password changed succesfully', user });
+    }
+    return res
+      .status(400)
+      .json({ message: 'Enter a valid password and try again.' });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong trying to change your password please try again later', error });
   }
 });
 
