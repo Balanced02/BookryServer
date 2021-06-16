@@ -9,6 +9,7 @@ import mailingService from '../mailing/service';
 import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
 import validators from '../validators/validators';
+import validateToken from '../middlewares/validateToken';
 
 declare module 'express-session' {
   interface Session {
@@ -224,59 +225,46 @@ router.post('/verifyCode', (req: Request, res: Response) => {
 });
 
 router.post(
-  '/resetPassword/:code',
-  [validators.emailValidator, validators.passwordValidator],
+  '/changePassword',
+  validateToken,
+  [validators.passwordValidator],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json(formatValidationMessages(errors.array()));
       }
-      const { email, password } = req.body;
-
-      if (Number(req.params.code) !== Number(req.session.resetCode)) {
-        return res
-          .status(400)
-          .json({ message: 'The code you enter is invalid' });
-      }
-
-      delete req.session.resetCode;
-
-      const salt: string = await bcrypt.genSalt(10);
-
-      const user = await User.findOneAndUpdate(
-        email,
-        {
-          $set: {
-            password: await bcrypt.hash(password, salt),
+      const { oldPassword, password } = req.body;
+      const findUser = await User.findById(req.user._id);
+      if (findUser.comparePassword(oldPassword)) {
+        const salt: string = await bcrypt.genSalt(10);
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              password: bcrypt.hashSync(password, salt),
+            },
           },
-        },
-        {
-          new: true,
-        },
-      );
-
-      await user.save();
-
-      user.password = '';
-
-      const payload = {
-        id: user._id,
-        email: user.email,
-        userType: user.userType,
-      };
-
-      return res.status(200).json({
-        token: jwt.sign(payload, process.env.jwtSecret, {
-          expiresIn: 15768000,
-        }),
-        user,
-        message: user.isEmailVerified
-          ? `Welcome ${user.fullName}`
-          : `${user.fullName}, Please verify your account `,
-      });
+          {
+            new: true,
+          },
+        );
+        user.password = '';
+        return res
+          .status(200)
+          .json({ message: 'Password changed succesfully', user });
+      }
+      return res
+        .status(400)
+        .json({ message: 'Enter a valid password and try again.' });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error });
+      return res
+        .status(500)
+        .json({
+          message:
+            'Something went wrong trying to change your password please try again later',
+          error,
+        });
     }
   },
 );
