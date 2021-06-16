@@ -1,5 +1,5 @@
 # Bookry
-Bookry is a web and mobile application for Readers, Authors, Professional Publishes and Editors. It is a platform where: 
+Bookry is a web and mobile application for Readers, Authors, Professional Publishers and Editors. It is a platform where: 
 
 * Readers can pick a book of choice to read
 * Authors can upload their books for editors to edit, publishers to 
