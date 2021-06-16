@@ -14,6 +14,7 @@ import validateToken from '../middlewares/validateToken';
 declare module 'express-session' {
   interface Session {
     verificationCode: number;
+    resetCode?: number;
   }
 }
 
@@ -36,7 +37,11 @@ const router: Router = Router();
 
 router.post(
   '/register',
-  [validators.emailValidator, validators.passwordValidator, validators.fullNameValidator],
+  [
+    validators.emailValidator,
+    validators.passwordValidator,
+    validators.fullNameValidator,
+  ],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -88,40 +93,46 @@ router.post(
   },
 );
 
-router.post('/login', [validators.emailValidator], async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(formatValidationMessages(errors.array()));
-    }
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+router.post(
+  '/login',
+  [validators.emailValidator],
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json(formatValidationMessages(errors.array()));
+      }
+      const { email, password } = req.body;
+      const user = await User.findOne({ email });
 
-    if (!user || !user.comparePassword(password)) {
-      return res.status(401).json({
-        message: 'Authentication failed, invalid Email or Password.',
+      if (!user || !user.comparePassword(password)) {
+        return res.status(401).json({
+          message: 'Authentication failed, invalid Email or Password.',
+        });
+      }
+
+      user.password = '';
+
+      const payload = {
+        id: user._id,
+        email: user.email,
+        userType: user.userType,
+      };
+
+      return res.status(200).json({
+        token: jwt.sign(payload, process.env.jwtSecret, {
+          expiresIn: 15768000,
+        }),
+        user,
+        message: user.isEmailVerified
+          ? `Welcome ${user.fullName}`
+          : `${user.fullName}, Please verify your account `,
       });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error', error });
     }
-
-    user.password = '';
-
-    const payload = {
-      id: user._id,
-      email: user.email,
-      userType: user.userType,
-    };
-
-    return res.status(200).json({
-      token: jwt.sign(payload, process.env.jwtSecret, { expiresIn: 15768000 }),
-      user,
-      message: user.isEmailVerified
-        ? `Welcome ${user.fullName}`
-        : `${user.fullName}, Please verify your account `,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error', error });
-  }
-});
+  },
+);
 
 router.post(
   '/verifyEmail',
@@ -129,8 +140,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode && Number(req.body.verificationCode)
-        === Number(req.session.verificationCode)
+        req.session.verificationCode &&
+        Number(req.body.verificationCode) ===
+          Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -144,71 +156,117 @@ router.post(
           },
         );
         user.password = '';
-        return res.status(200).json({ message: 'Email Verified Successfully!', user });
+        return res
+          .status(200)
+          .json({ message: 'Email Verified Successfully!', user });
       }
-      return res
-        .status(400)
-        .json({ message: 'Please provide a correct code' });
+      return res.status(400).json({ message: 'Please provide a correct code' });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: 'Something went wrong! please try again later', error });
+      return res.status(500).json({
+        message: 'Something went wrong! please try again later',
+        error,
+      });
     }
   },
 );
 
-router.get('/resendCode', emailNotVerified, async (req: Request, res: Response) => {
+router.post(
+  '/recoverPassword',
+  [validators.emailValidator],
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json(formatValidationMessages(errors.array()));
+      }
+      const { email } = req.body;
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: 'Invalid email address!' });
+      }
+
+      const resetCode = Math.floor(Math.random() * 100000);
+
+      req.session.resetCode = resetCode;
+
+      mailingService(
+        'Password Reset Code',
+        confirmEmailTemplate(resetCode),
+        email,
+      );
+
+      await user.save();
+
+      return res
+        .status(200)
+        .json({ message: 'Password reset code has been sent ' });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error', error });
+    }
+  },
+);
+
+router.post('/verifyCode', (req: Request, res: Response) => {
   try {
-    const { email } = req.user;
-    const verificationCode = Math.floor(Math.random() * 100000);
-    req.session.verificationCode = verificationCode;
-    mailingService(
-      'Confirm Email',
-      confirmEmailTemplate(verificationCode),
-      email,
-    );
-    return res
-      .status(200)
-      .json({ message: 'Verification code sent succesfully' });
+    if (
+      req.session.resetCode &&
+      Number(req.body.resetCode) === Number(req.session.resetCode)
+    ) {
+      res.status(200).json({ message: 'Verified sucessfully' });
+    } else {
+      res.status(400).json({ message: 'Wrong reset code provided' });
+    }
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error });
+    return res.status(500).json({
+      message: 'Something went wrong! please try again later',
+      error,
+    });
   }
 });
 
-router.post('/changePassword', validateToken, [validators.passwordValidator], async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(formatValidationMessages(errors.array()));
-    }
-    const { oldPassword, password } = req.body;
-    const findUser = await User.findById(req.user._id);
-    if (findUser.comparePassword(oldPassword)) {
-      const salt: string = await bcrypt.genSalt(10);
-      const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-          $set: {
-            password: bcrypt.hashSync(password, salt),
+router.post(
+  '/changePassword',
+  validateToken,
+  [validators.passwordValidator],
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json(formatValidationMessages(errors.array()));
+      }
+      const { oldPassword, password } = req.body;
+      const findUser = await User.findById(req.user._id);
+      if (findUser.comparePassword(oldPassword)) {
+        const salt: string = await bcrypt.genSalt(10);
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            $set: {
+              password: bcrypt.hashSync(password, salt),
+            },
           },
-        },
-        {
-          new: true,
-        },
-      );
-      user.password = '';
+          {
+            new: true,
+          },
+        );
+        user.password = '';
+        return res
+          .status(200)
+          .json({ message: 'Password changed succesfully', user });
+      }
       return res
-        .status(200)
-        .json({ message: 'Password changed succesfully', user });
+        .status(400)
+        .json({ message: 'Enter a valid password and try again.' });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({
+          message:
+            'Something went wrong trying to change your password please try again later',
+          error,
+        });
     }
-    return res
-      .status(400)
-      .json({ message: 'Enter a valid password and try again.' });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: 'Something went wrong trying to change your password please try again later', error });
-  }
-});
+  },
+);
 
 export default router;
