@@ -140,9 +140,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode &&
-        Number(req.body.verificationCode) ===
-          Number(req.session.verificationCode)
+        req.session.verificationCode
+        && Number(req.body.verificationCode)
+        === Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -209,8 +209,8 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode &&
-      Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode
+      && Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
       res.status(200).json({ message: 'Verified sucessfully' });
     } else {
@@ -268,5 +268,24 @@ router.post(
     }
   },
 );
+
+router.put('/updateProfile', validateToken, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.fullName = req.body.fullName || user.fullName;
+      user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+      user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth;
+    }
+    const updatedUser = await user.save();
+    return res
+      .status(200)
+      .json({ message: 'Profile updated successfully', updatedUser });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong please try again later', error });
+  }
+});
 
 export default router;

@@ -7,6 +7,8 @@ export interface IUser extends Document {
   password: string;
   isEmailVerified: boolean;
   userType: 'author' | 'editor' | 'reader';
+  phoneNumber: string;
+  dateOfBirth: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -34,6 +36,17 @@ const UserSchema = new Schema<IUser>({
     default: 'reader',
     enum: ['author', 'editor', 'reader'],
   },
+  phoneNumber: {
+    type: String,
+  },
+  dateOfBirth: {
+    type: String,
+  },
+  socialMedia: [
+    {
+      facebook: String,
+    },
+  ],
   created: {
     type: Date,
     default: Date.now,
