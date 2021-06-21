@@ -16,7 +16,7 @@ data: {...user}
 | user_create_success     | New user is created successfully | - |
 | greet_user | Welcome `${name}` | name |
 | verify_account | `${name}`, Please verify your account | name |
-| verified | You’ve verified your account | - |
+| verified | You’ve been verified Successfully| - |
 | email_verified | Email verified successfully | - |
 | verify_token_sent | Verification code sent succesfully | - |
 | reset_token_sent | Password reset code has been sent | - |
