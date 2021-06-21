@@ -21,7 +21,7 @@ const validateToken = async (
   } else {
     res
       .status(401)
-      .json({ message: 'Unauthorized access' });
+      .json({ message: 'access_failed' });
   }
 };
 export default validateToken;

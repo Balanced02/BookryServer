@@ -48,7 +48,7 @@ router.post(
       if (isUserCreated) {
         return res
           .status(409)
-          .json({ message: 'A user with that email address already exists' });
+          .json({ message: 'email_inuse' });
       }
 
       const user = new User({ fullName, email });
@@ -81,9 +81,9 @@ router.post(
 
       return res
         .status(200)
-        .json({ message: 'New user created successfully ', token, user });
+        .json({ message: 'user_create_success ', token, user });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error });
+      return res.status(500).json({ message: 'server_error', error });
     }
   },
 );
@@ -99,7 +99,7 @@ router.post('/login', [validators.emailValidator], async (req: Request, res: Res
 
     if (!user || !user.comparePassword(password)) {
       return res.status(401).json({
-        message: 'Authentication failed, invalid Email or Password.',
+        message: 'invalid_credentials',
       });
     }
 
@@ -115,11 +115,11 @@ router.post('/login', [validators.emailValidator], async (req: Request, res: Res
       token: jwt.sign(payload, process.env.jwtSecret, { expiresIn: 15768000 }),
       user,
       message: user.isEmailVerified
-        ? `Welcome ${user.fullName}`
-        : `${user.fullName}, Please verify your account `,
+        ? `greet_user ${user.fullName}`
+        : `${user.fullName}, verify_account`,
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error });
+    return res.status(500).json({ message: 'server_error', error });
   }
 });
 
@@ -144,15 +144,15 @@ router.post(
           },
         );
         user.password = '';
-        return res.status(200).json({ message: 'Email Verified Successfully!', user });
+        return res.status(200).json({ message: 'email_verified', user });
       }
       return res
         .status(400)
-        .json({ message: 'Please provide a correct code' });
+        .json({ message: 'token_invalid' });
     } catch (error) {
       return res
         .status(500)
-        .json({ message: 'Something went wrong! please try again later', error });
+        .json({ message: 'server_error', error });
     }
   },
 );
@@ -169,9 +169,9 @@ router.get('/resendCode', emailNotVerified, async (req: Request, res: Response) 
     );
     return res
       .status(200)
-      .json({ message: 'Verification code sent succesfully' });
+      .json({ message: 'verify_token_sent' });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error', error });
+    return res.status(500).json({ message: 'server_error', error });
   }
 });
 
@@ -199,15 +199,15 @@ router.post('/changePassword', validateToken, [validators.passwordValidator], as
       user.password = '';
       return res
         .status(200)
-        .json({ message: 'Password changed succesfully', user });
+        .json({ message: 'password_reset_success', user });
     }
     return res
       .status(400)
-      .json({ message: 'Enter a valid password and try again.' });
+      .json({ message: 'password_invalid' });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Something went wrong trying to change your password please try again later', error });
+      .json({ message: 'server_error', error });
   }
 });
 

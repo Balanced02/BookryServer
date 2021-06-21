@@ -12,13 +12,17 @@ data: {...user}
 
 | Name/Key        | Description           | Variables  |
 | :-------------: |:-----------:| :-----:|
+| api_greeting     | Welcome to bookry APIs | - |
 | user_create_success     | New user is created successfully | - |
 | greet_user | Welcome `${name}` | name |
 | verify_account | `${name}`, Please verify your account | name |
 | verified | You’ve verified your account | - |
 | email_verified | Email verified successfully | - |
+| verify_token_sent | Verification code sent succesfully | - |
 | reset_token_sent | Password reset code has been sent | - |
-|  |  |  |
+| password_reset_success | Password changed succesfully' | - |
+| database_connected | Database connected successfully | - |
+|  |  | - |
 
 
 ## Error Responses
@@ -40,13 +44,15 @@ data: {...user}
 | full_name_empty | Please provide your full name | - |
 | email_invalid | Please provide a valid email address | - |
 | email_inuse | A user with this email already exist | - |
+| password_invalid | Please provide a valid password and try again | - |
 | password_empty | Please provide your password | - |
-| password_size | Password must have a minimum of 8 characters  | - |
+| password_length | Password must have a minimum of 8 characters  | - |
 | password_with_number | Password must contain a number | - |
 | password_easy | Password too easy to guess, use something stronger | - |
-| server_error | Server Error | - |
-| auth_failed | Unauthorised access | - |
-| token_invalid | Wrong code provided | - |
+| server_error | Something went wrong, try again later | - |
+| verify_email | Please verify your email address | - |
+| access_failed | Unauthorised access | - |
+| token_invalid | Invalid token provided | - |
 |  |  | - |
 
 

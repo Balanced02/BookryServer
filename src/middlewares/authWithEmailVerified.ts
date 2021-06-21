@@ -20,17 +20,17 @@ const authWithEmailVerified = async (
         next();
       } else {
         res.status(401).json({
-          message: 'Please verify your email address',
+          message: 'verify_email',
         });
       }
     } else {
       res.status(401).json({
-        message: 'Unauthorized access',
+        message: 'access_failed',
       });
     }
   } else {
     res.status(401).json({
-      message: 'Unauthorized access',
+      message: 'access_failed',
     });
   }
 };
