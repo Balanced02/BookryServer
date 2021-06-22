@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
+import Profile from '../models/ProfileModel';
 import User from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
 import mailingService from '../mailing/service';
@@ -271,16 +272,34 @@ router.post(
 
 router.put('/updateProfile', validateToken, async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.fullName = req.body.fullName || user.fullName;
-      user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
-      user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth;
+    const hasprofile = await Profile.findOne({ userId: req.user._id });
+    if (!hasprofile) {
+      const { phoneNumber, dateOfBirth, socialMedia } = req.body;
+      const profile = new Profile({
+        phoneNumber,
+        dateOfBirth,
+        socialMedia,
+        userId: req.user._id,
+      });
+
+      await profile.save();
+      return res
+        .status(200)
+        .json({ message: 'Profile updated successfully', profile });
     }
-    const updatedUser = await user.save();
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req.user._id },
+      {
+        $set: {
+          phoneNumber: req.body.phoneNumber,
+          dateOfBirth: req.body.dateOfBirth,
+          socialMedia: req.body.socialMedia,
+        },
+      },
+    );
     return res
       .status(200)
-      .json({ message: 'Profile updated successfully', updatedUser });
+      .json({ message: 'Profile updated successfully', profile });
   } catch (error) {
     return res
       .status(500)
