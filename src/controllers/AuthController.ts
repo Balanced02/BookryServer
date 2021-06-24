@@ -272,6 +272,18 @@ router.post(
 
 router.put('/updateProfile', validateToken, async (req: Request, res: Response) => {
   try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          fullName: req.body.fullName,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+    user.password = '';
     const hasprofile = await Profile.findOne({ userId: req.user._id });
     if (!hasprofile) {
       const { phoneNumber, dateOfBirth, socialMedia } = req.body;
@@ -281,11 +293,10 @@ router.put('/updateProfile', validateToken, async (req: Request, res: Response) 
         socialMedia,
         userId: req.user._id,
       });
-
       await profile.save();
       return res
         .status(200)
-        .json({ message: 'Profile updated successfully', profile });
+        .json({ message: 'Profile updated successfully', profile, user });
     }
     const profile = await Profile.findOneAndUpdate(
       { userId: req.user._id },
@@ -299,7 +310,7 @@ router.put('/updateProfile', validateToken, async (req: Request, res: Response) 
     );
     return res
       .status(200)
-      .json({ message: 'Profile updated successfully', profile });
+      .json({ message: 'Profile updated successfully', profile, user });
   } catch (error) {
     return res
       .status(500)

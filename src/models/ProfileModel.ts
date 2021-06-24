@@ -4,14 +4,7 @@ export interface IProfile extends Document {
   phoneNumber: string;
   dateOfBirth: string;
   displayDob: boolean;
-  socialMedia: [
-    {
-      facebook: string,
-      instagram: string,
-      linkedin: string,
-      others: string,
-    },
-  ];
+  socialMedia: [];
 }
 
 const ProfileSchema = new Schema({
@@ -26,12 +19,8 @@ const ProfileSchema = new Schema({
     default: true,
   },
   socialMedia: [
-
     {
-      facebook: String,
-      instagram: String,
-      linkedin: String,
-      others: String,
+
     },
   ],
   userId: {
