@@ -36,6 +36,65 @@ declare global {
 const router: Router = Router();
 
 router.post(
+  '/admin/register',
+  [
+    validators.emailValidator,
+    validators.passwordValidator,
+    validators.fullNameValidator,
+  ],
+  async (req: Request, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json(formatValidationMessages(errors.array()));
+      }
+      const { email, password, fullName } = req.body;
+      const isUserCreated = await User.findOne({ email });
+      if (isUserCreated) {
+        return res
+          .status(409)
+          .json({ message: 'A user with that email address already exists' });
+      }
+
+      const user = new User({ fullName, email, role: 'super-admin' });
+
+      const salt: string = await bcrypt.genSalt(10);
+
+      user.password = bcrypt.hashSync(password, salt);
+
+      await user.save();
+
+      const verificationCode = Math.floor(Math.random() * 100000);
+
+      req.session.verificationCode = verificationCode;
+
+      mailingService(
+        'Confirm Email',
+        confirmEmailTemplate(verificationCode),
+        email,
+      );
+
+      user.password = '';
+
+      const payload = {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        userType: user.userType,
+      };
+
+      const token = jwt.sign(payload, process.env.jwtSecret);
+
+      return res
+        .status(200)
+        .json({ message: 'New user created successfully ', token, user });
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error', error });
+    }
+  },
+);
+
+router.post(
   '/register',
   [
     validators.emailValidator,
