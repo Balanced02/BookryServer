@@ -272,11 +272,12 @@ router.post(
 
 router.put('/updateProfile', validateToken, async (req: Request, res: Response) => {
   try {
+    const userFullName = req.user.fullName;
     const user = await User.findByIdAndUpdate(
       req.user._id,
       {
         $set: {
-          fullName: req.body.fullName,
+          fullName: req.body.fullName || userFullName,
         },
       },
       {

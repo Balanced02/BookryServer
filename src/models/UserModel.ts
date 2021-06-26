@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
-import { IProfile } from './ProfileModel';
 
 export interface IUser extends Document {
   fullName: string;
@@ -8,7 +7,6 @@ export interface IUser extends Document {
   password: string;
   isEmailVerified: boolean;
   userType: 'author' | 'editor' | 'reader';
-  profile: IProfile['_id'];
 }
 
 const UserSchema = new Schema<IUser>({

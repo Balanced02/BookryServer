@@ -19,9 +19,7 @@ const ProfileSchema = new Schema({
     default: true,
   },
   socialMedia: [
-    {
-
-    },
+    {},
   ],
   userId: {
     type: mongoose.Schema.Types.ObjectId,
