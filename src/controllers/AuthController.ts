@@ -51,9 +51,7 @@ router.post(
       const { email, password, fullName } = req.body;
       const isUserCreated = await User.findOne({ email });
       if (isUserCreated) {
-        return res
-          .status(409)
-          .json({ message: 'email_inuse' });
+        return res.status(409).json({ message: 'email_inuse' });
       }
 
       const user = new User({ fullName, email });
@@ -124,9 +122,7 @@ router.post(
           expiresIn: 15768000,
         }),
         user,
-        message: user.isEmailVerified
-          ? `greet_user ${user.fullName}`
-          : `${user.fullName}, verify_account`,
+        message: user.isEmailVerified ? 'greet_user' : 'verify_account',
       });
     } catch (error) {
       return res.status(500).json({ message: 'server_error', error });
@@ -158,9 +154,7 @@ router.post(
         user.password = '';
         return res.status(200).json({ message: 'email_verified', user });
       }
-      return res
-        .status(400)
-        .json({ message: 'token_invalid' });
+      return res.status(400).json({ message: 'token_invalid' });
     } catch (error) {
       return res.status(500).json({
         message: 'Something went wrong! please try again later',
@@ -197,9 +191,7 @@ router.post(
 
       await user.save();
 
-      return res
-        .status(200)
-        .json({ message: 'reset_token_sent' });
+      return res.status(200).json({ message: 'reset_token_sent' });
     } catch (error) {
       return res.status(500).json({ message: 'server_error', error });
     }
@@ -209,7 +201,8 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode && Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode &&
+      Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
       res.status(200).json({ message: 'verified' });
     } else {
@@ -253,17 +246,12 @@ router.post(
           .status(200)
           .json({ message: 'password_reset_success', user });
       }
-      return res
-        .status(400)
-        .json({ message: 'password_invalid' });
+      return res.status(400).json({ message: 'password_invalid' });
     } catch (error) {
-      return res
-        .status(500)
-        .json({
-          message:
-            'server_error',
-          error,
-        });
+      return res.status(500).json({
+        message: 'server_error',
+        error,
+      });
     }
   },
 );
