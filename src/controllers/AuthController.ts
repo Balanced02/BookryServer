@@ -51,7 +51,7 @@ router.post(
       const { email, password, fullName } = req.body;
       const isUserCreated = await User.findOne({ email });
       if (isUserCreated) {
-        return res.status(409).json({ message: 'email_inuse' });
+        return res.status(409).json({ message: 'email_exist' });
       }
 
       const user = new User({ fullName, email });
@@ -82,9 +82,12 @@ router.post(
 
       const token = jwt.sign(payload, process.env.jwtSecret);
 
-      return res
-        .status(200)
-        .json({ message: 'user_create_success ', token, user });
+      return res.status(200).json({
+        message: 'user_create_success ',
+        variables: { name: user.fullName, email: user.email },
+        data: { ...user },
+        token,
+      });
     } catch (error) {
       return res.status(500).json({ message: 'server_error', error });
     }

@@ -20,7 +20,7 @@ data: {...user}
 | email_verified | Email verified successfully | - |
 | verify_token_sent | Verification code sent succesfully | - |
 | reset_token_sent | Password reset code has been sent | - |
-| password_reset_success | Password changed succesfully' | - |
+| password_reset_success | Password changed succesfully | - |
 | database_connected | Database connected successfully | - |
 |  |  | - |
 
@@ -43,7 +43,7 @@ data: {...user}
 | invalid_credentials | Authentication failed, invalid Email or Password | - |
 | full_name_empty | Please provide your full name | - |
 | email_invalid | Please provide a valid email address | - |
-| email_inuse | A user with this email already exist | - |
+| email_exist | A user with this email already exist | - |
 | password_invalid | Please provide a valid password and try again | - |
 | password_empty | Please provide your password | - |
 | password_length | Password must have a minimum of 8 characters  | - |
