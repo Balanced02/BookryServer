@@ -17,4 +17,8 @@ const passwordValidator = check('password')
   .isIn(['123456', 'password', 'god'])
   .withMessage('Password to easy to guess, use something stronger ');
 
+const socialMediaValidator = check('facebook')
+  .notEmpty()
+  .withMessage('Please provide a valid link to your profile');
+
 export default { passwordValidator, emailValidator, fullNameValidator };

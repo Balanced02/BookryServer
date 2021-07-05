@@ -11,6 +11,7 @@ import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
 import validators from '../validators/validators';
 import validateToken from '../middlewares/validateToken';
+import socialMediaChecks from '../middlewares/socialMediaChecks';
 
 declare module 'express-session' {
   interface Session {
@@ -270,7 +271,7 @@ router.post(
   },
 );
 
-router.put('/updateProfile', validateToken, async (req: Request, res: Response) => {
+router.put('/updateProfile', validateToken, socialMediaChecks, async (req: Request, res: Response) => {
   try {
     const userFullName = req.user.fullName;
     const user = await User.findByIdAndUpdate(
