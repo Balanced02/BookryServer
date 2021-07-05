@@ -4,17 +4,11 @@ const socialMediaChecks = async (req: Request, res: Response, next: NextFunction
   const { socialMedia } = req.body;
   if (Array.isArray(socialMedia)) {
     if (socialMedia.find((value) => typeof value === 'object')) {
-      const val = socialMedia.find((value) => typeof value === 'object');
-      // if (!val.key) {
-      //   return res
-      //     .status(401)
-      //     .json({ message: 'This field cannot be empty' });
-      // }
       next();
     } else {
       return res
         .status(401)
-        .json({ message: 'Cannot perform this operation on a non Array' });
+        .json({ message: 'Object not found' });
     }
   } else {
     return res
