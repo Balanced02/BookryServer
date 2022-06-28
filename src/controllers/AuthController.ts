@@ -41,7 +41,7 @@ router.post(
 
       user.password = bcrypt.hashSync(password, salt);
 
-      user.save();
+      await user.save();
 
       const verificationCode = Math.floor(Math.random() * 100000);
 
