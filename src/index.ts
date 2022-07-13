@@ -11,7 +11,7 @@ dotenv.config();
 const app: Application = express();
 
 Sentry.init({
-  dsn: `https://${process.env.sentryKey}.sentry.io/5791935`,
+  dsn: process.env.sentryDNS,
   integrations: [
     new Sentry.Integrations.Http({ tracing: true }),
     new Tracing.Integrations.Express({ app }),

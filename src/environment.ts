@@ -6,7 +6,7 @@ declare global {
       jwtSecret: string;
       email: string;
       password: string;
-      sentryKey: string;
+      sentryDNS: string;
       sessionSecret: string;
     }
   }
