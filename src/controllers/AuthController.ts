@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
+import Profile from '../models/ProfileModel';
 import User from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
 import mailingService from '../mailing/service';
@@ -10,6 +11,7 @@ import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
 import validators from '../validators/validators';
 import validateToken from '../middlewares/validateToken';
+import socialMediaChecks from '../middlewares/socialMediaChecks';
 
 declare module 'express-session' {
   interface Session {
@@ -198,9 +200,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode &&
-        Number(req.body.verificationCode) ===
-          Number(req.session.verificationCode)
+        req.session.verificationCode
+        && Number(req.body.verificationCode)
+        === Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -263,8 +265,8 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode &&
-      Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode
+      && Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
       res.status(200).json({ message: 'verified' });
     } else {
@@ -317,5 +319,54 @@ router.post(
     }
   },
 );
+
+router.put('/updateProfile', validateToken, socialMediaChecks, async (req: Request, res: Response) => {
+  try {
+    const userFullName = req.user.fullName;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          fullName: req.body.fullName || userFullName,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+    user.password = '';
+    const hasprofile = await Profile.findOne({ userId: req.user._id });
+    if (!hasprofile) {
+      const { phoneNumber, dateOfBirth, socialMedia } = req.body;
+      const profile = new Profile({
+        phoneNumber,
+        dateOfBirth,
+        socialMedia,
+        userId: req.user._id,
+      });
+      await profile.save();
+      return res
+        .status(200)
+        .json({ message: 'Profile updated successfully', profile, user });
+    }
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req.user._id },
+      {
+        $set: {
+          phoneNumber: req.body.phoneNumber,
+          dateOfBirth: req.body.dateOfBirth,
+          socialMedia: req.body.socialMedia,
+        },
+      },
+    );
+    return res
+      .status(200)
+      .json({ message: 'Profile updated successfully', profile, user });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Something went wrong please try again later', error });
+  }
+});
 
 export default router;
