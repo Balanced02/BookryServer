@@ -16,8 +16,8 @@ const emailNotVerified = async (
       );
       if (verifiedToken) {
         const user = await User.findById(verifiedToken.id);
-        req.user = user;
-        if (!user.isEmailVerified) {
+        if (user && !user.isEmailVerified) {
+          req.user = user;
           next();
         } else {
           res.status(200).json({
@@ -26,7 +26,7 @@ const emailNotVerified = async (
         }
       } else {
         res.status(401).json({
-          message: 'access_failed',
+          message: 'unauthorized_access',
         });
       }
     } else {
@@ -36,7 +36,7 @@ const emailNotVerified = async (
     }
   } catch (error) {
     res.status(401).json({
-      message: 'access_failed',
+      message: 'unauthorized_access',
     });
   }
 };
