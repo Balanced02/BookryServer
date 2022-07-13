@@ -5,7 +5,7 @@ import AuthController from '../controllers/AuthController';
 const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
-  res.status(200).json({ message: 'Welcome to bookry APIs' });
+  res.status(200).json({ message: 'api_greeting' });
 });
 
 router.use('/auth', AuthController);

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/UserModel';
 
-const authWithEmailVerified = async (
+const validateToken = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -16,23 +16,12 @@ const authWithEmailVerified = async (
     if (verifiedToken) {
       const user = await User.findById(verifiedToken.id);
       req.user = user;
-      if (user.isEmailVerified) {
-        next();
-      } else {
-        res.status(401).json({
-          message: 'verify_email',
-        });
-      }
-    } else {
-      res.status(401).json({
-        message: 'access_failed',
-      });
     }
+    next();
   } else {
-    res.status(401).json({
-      message: 'access_failed',
-    });
+    res
+      .status(401)
+      .json({ message: 'access_failed' });
   }
 };
-
-export default { authWithEmailVerified };
+export default validateToken;
