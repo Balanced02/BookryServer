@@ -21,22 +21,22 @@ const emailNotVerified = async (
           next();
         } else {
           res.status(200).json({
-            message: "You've verified your account already",
+            message: 'verified',
           });
         }
       } else {
         res.status(401).json({
-          message: 'Unauthorized access',
+          message: 'access_failed',
         });
       }
     } else {
       res.status(401).json({
-        message: 'Token not valid',
+        message: 'token_invalid',
       });
     }
   } catch (error) {
     res.status(401).json({
-      message: 'Unauthorized access',
+      message: 'access_failed',
     });
   }
 };

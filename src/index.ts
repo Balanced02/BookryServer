@@ -39,7 +39,7 @@ app.use('/api/v1', router);
 app.use(Sentry.Handlers.errorHandler());
 
 app.use('*', (req: Request, res: Response) => {
-  res.status(400).json({ message: 'Invalid_Url' });
+  res.status(400).json({ message: 'not_found_exception' });
 });
 
 const PORT = process.env.PORT || 8000;

@@ -2,19 +2,19 @@ import { check } from 'express-validator';
 
 const emailValidator = check('email')
   .isEmail()
-  .withMessage('Please provide a valid Email address');
+  .withMessage('email_invalid');
 
 const fullNameValidator = check('fullName')
   .notEmpty()
-  .withMessage('Please provide Full Name');
+  .withMessage('full_name_empty');
 
 const passwordValidator = check('password')
   .isLength({ min: 8 })
-  .withMessage('Password must be a minimum of 8 characters')
+  .withMessage('password_length')
   .matches(/\d/)
-  .withMessage('Password must contain a number')
+  .withMessage('password_with_number')
   .not()
   .isIn(['123456', 'password', 'god'])
-  .withMessage('Password to easy to guess, use something stronger ');
+  .withMessage('password_easy ');
 
 export default { passwordValidator, emailValidator, fullNameValidator };

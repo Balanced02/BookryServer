@@ -110,9 +110,7 @@ router.post(
       const { email, password, fullName } = req.body;
       const isUserCreated = await User.findOne({ email });
       if (isUserCreated) {
-        return res
-          .status(409)
-          .json({ message: 'A user with that email address already exists' });
+        return res.status(409).json({ message: 'email_exist' });
       }
 
       const user = new User({ fullName, email });
@@ -143,11 +141,14 @@ router.post(
 
       const token = jwt.sign(payload, process.env.jwtSecret);
 
-      return res
-        .status(200)
-        .json({ message: 'New user created successfully ', token, user });
+      return res.status(200).json({
+        message: 'user_create_success ',
+        variables: { name: user.fullName, email: user.email },
+        data: { ...user },
+        token,
+      });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error });
+      return res.status(500).json({ message: 'server_error', error });
     }
   },
 );
@@ -166,7 +167,7 @@ router.post(
 
       if (!user || !user.comparePassword(password)) {
         return res.status(401).json({
-          message: 'Authentication failed, invalid Email or Password.',
+          message: 'invalid_credentials',
         });
       }
 
@@ -183,12 +184,10 @@ router.post(
           expiresIn: 15768000,
         }),
         user,
-        message: user.isEmailVerified
-          ? `Welcome ${user.fullName}`
-          : `${user.fullName}, Please verify your account `,
+        message: user.isEmailVerified ? 'greet_user' : 'verify_account',
       });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error });
+      return res.status(500).json({ message: 'server_error', error });
     }
   },
 );
@@ -215,11 +214,9 @@ router.post(
           },
         );
         user.password = '';
-        return res
-          .status(200)
-          .json({ message: 'Email Verified Successfully!', user });
+        return res.status(200).json({ message: 'email_verified', user });
       }
-      return res.status(400).json({ message: 'Please provide a correct code' });
+      return res.status(400).json({ message: 'token_invalid' });
     } catch (error) {
       return res.status(500).json({
         message: 'Something went wrong! please try again later',
@@ -256,11 +253,9 @@ router.post(
 
       await user.save();
 
-      return res
-        .status(200)
-        .json({ message: 'Password reset code has been sent ' });
+      return res.status(200).json({ message: 'reset_token_sent' });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error });
+      return res.status(500).json({ message: 'server_error', error });
     }
   },
 );
@@ -271,13 +266,13 @@ router.post('/verifyCode', (req: Request, res: Response) => {
       req.session.resetCode &&
       Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
-      res.status(200).json({ message: 'Verified sucessfully' });
+      res.status(200).json({ message: 'verified' });
     } else {
-      res.status(400).json({ message: 'Wrong reset code provided' });
+      res.status(400).json({ message: 'token_invalid' });
     }
   } catch (error) {
     return res.status(500).json({
-      message: 'Something went wrong! please try again later',
+      message: 'server_error',
       error,
     });
   }
@@ -311,19 +306,14 @@ router.post(
         user.password = '';
         return res
           .status(200)
-          .json({ message: 'Password changed succesfully', user });
+          .json({ message: 'password_reset_success', user });
       }
-      return res
-        .status(400)
-        .json({ message: 'Enter a valid password and try again.' });
+      return res.status(400).json({ message: 'password_invalid' });
     } catch (error) {
-      return res
-        .status(500)
-        .json({
-          message:
-            'Something went wrong trying to change your password please try again later',
-          error,
-        });
+      return res.status(500).json({
+        message: 'server_error',
+        error,
+      });
     }
   },
 );
