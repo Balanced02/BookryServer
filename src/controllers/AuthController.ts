@@ -3,10 +3,10 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
-import User from '../models/UserModel';
+import User, { IUser } from '../models/UserModel';
 import formatValidationMessages from '../helpers/formatValidationMessages';
-import mailingService from '../mailing/service';
-import confirmEmailTemplate from '../mailing/confirmEmail';
+// import mailingService from '../mailing/service';
+// import confirmEmailTemplate from '../mailing/confirmEmail';
 import emailNotVerified from '../middlewares/emailNotVerified';
 import validators from '../validators/validators';
 import validateToken from '../middlewares/validateToken';
@@ -49,32 +49,32 @@ router.post(
         return res.status(400).json(formatValidationMessages(errors.array()));
       }
       const { email, password, fullName } = req.body;
-      const isUserCreated = await User.findOne({ email });
+      const isUserCreated = await User.findOne({ email, userType: 'super-admin' });
       if (isUserCreated) {
         return res
           .status(409)
           .json({ message: 'A user with that email address already exists' });
       }
 
-      const user = new User({ fullName, email, role: 'super-admin' });
+      const user = new User({ fullName, email })
 
       const salt: string = await bcrypt.genSalt(10);
 
-      user.password = bcrypt.hashSync(password, salt);
-
-      await user.save();
+      user.password = bcrypt.hashSync(password, salt) 
 
       const verificationCode = Math.floor(Math.random() * 100000);
 
       req.session.verificationCode = verificationCode;
 
-      mailingService(
-        'Confirm Email',
-        confirmEmailTemplate(verificationCode),
-        email,
-      );
+      await user.save();
 
-      user.password = '';
+      console.log('verificationCode', verificationCode)
+
+      // mailingService(
+      //   'Confirm Email',
+      //   confirmEmailTemplate(verificationCode),
+      //   email,
+      // );
 
       const payload = {
         id: user._id,
@@ -87,7 +87,7 @@ router.post(
 
       return res
         .status(200)
-        .json({ message: 'New user created successfully ', token, user });
+        .json({ message: 'New user created successfully ', token, data: { fullName: user.fullName, email: user.email } });
     } catch (error) {
       return res.status(500).json({ message: 'Server error', error });
     }
@@ -124,12 +124,13 @@ router.post(
       const verificationCode = Math.floor(Math.random() * 100000);
 
       req.session.verificationCode = verificationCode;
+      console.log('verificationCode', verificationCode)
 
-      mailingService(
-        'Confirm Email',
-        confirmEmailTemplate(verificationCode),
-        email,
-      );
+      // mailingService(
+      //   'Confirm Email',
+      //   confirmEmailTemplate(verificationCode),
+      //   email,
+      // );
 
       user.password = '';
 
@@ -143,8 +144,7 @@ router.post(
 
       return res.status(200).json({
         message: 'user_create_success ',
-        variables: { name: user.fullName, email: user.email },
-        data: { ...user },
+        data: user,
         token,
       });
     } catch (error) {
@@ -183,7 +183,7 @@ router.post(
         token: jwt.sign(payload, process.env.jwtSecret, {
           expiresIn: 15768000,
         }),
-        user,
+        data: user,
         message: user.isEmailVerified ? 'greet_user' : 'verify_account',
       });
     } catch (error) {
@@ -213,8 +213,11 @@ router.post(
             new: true,
           },
         );
+        if (!user) {
+          return res.status(400).json({ message: 'user_not_found' });
+        };
         user.password = '';
-        return res.status(200).json({ message: 'email_verified', user });
+        return res.status(200).json({ message: 'email_verified', data: user });
       }
       return res.status(400).json({ message: 'token_invalid' });
     } catch (error) {
@@ -244,12 +247,13 @@ router.post(
       const resetCode = Math.floor(Math.random() * 100000);
 
       req.session.resetCode = resetCode;
+      console.log('resetCode', resetCode)
 
-      mailingService(
-        'Password Reset Code',
-        confirmEmailTemplate(resetCode),
-        email,
-      );
+      // mailingService(
+      //   'Password Reset Code',
+      //   confirmEmailTemplate(resetCode),
+      //   email,
+      // );
 
       await user.save();
 
@@ -290,7 +294,7 @@ router.post(
       }
       const { oldPassword, password } = req.body;
       const findUser = await User.findById(req.user._id);
-      if (findUser.comparePassword(oldPassword)) {
+      if (findUser && findUser.comparePassword(oldPassword)) {
         const salt: string = await bcrypt.genSalt(10);
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -303,6 +307,9 @@ router.post(
             new: true,
           },
         );
+        if (!user) {
+          return res.status(400).json({ message: 'user_not_found' });
+        };
         user.password = '';
         return res
           .status(200)

@@ -15,13 +15,19 @@ const validateToken = async (
     );
     if (verifiedToken) {
       const user = await User.findById(verifiedToken.id);
-      req.user = user;
+      if (user) {
+        req.user = user;
+        next();
+      } else {
+        res
+      .status(401)
+      .json({ message: 'unauthorized_access' });
+      }
     }
-    next();
   } else {
     res
       .status(401)
-      .json({ message: 'access_failed' });
+      .json({ message: 'unauthorized_access' });
   }
 };
 export default validateToken;

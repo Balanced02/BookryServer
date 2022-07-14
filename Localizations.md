@@ -51,7 +51,7 @@ data: {...user}
 | password_easy | Password too easy to guess, use something stronger | - |
 | server_error | Something went wrong, try again later | - |
 | verify_email | Please verify your email address | - |
-| access_failed | Unauthorised access | - |
+| unauthorized_access | Unauthorised access | - |
 | token_invalid | Invalid token provided | - |
 |  |  | - |
 

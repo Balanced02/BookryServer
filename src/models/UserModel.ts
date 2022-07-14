@@ -6,7 +6,10 @@ export interface IUser extends Document {
   email: string;
   password: string;
   isEmailVerified: boolean;
+  role: 'super-admin' | 'user';
   userType: 'author' | 'editor' | 'reader';
+  created: Date
+  comparePassword: (password: string) => boolean
 }
 
 const UserSchema = new Schema<IUser>({
@@ -24,6 +27,7 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
+    required: true,
   },
   isEmailVerified: {
     type: Boolean,
@@ -46,7 +50,7 @@ const UserSchema = new Schema<IUser>({
 });
 
 // eslint-disable-next-line func-names
-UserSchema.methods.comparePassword = function (password) {
+UserSchema.methods.comparePassword = function (password: string) {
   return bcrypt.compareSync(password, this.password);
 };
 

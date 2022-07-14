@@ -15,8 +15,8 @@ const authWithEmailVerified = async (
     );
     if (verifiedToken) {
       const user = await User.findById(verifiedToken.id);
-      req.user = user;
-      if (user.isEmailVerified) {
+      if (user && user.isEmailVerified) {
+        req.user = user;
         next();
       } else {
         res.status(401).json({
@@ -25,14 +25,14 @@ const authWithEmailVerified = async (
       }
     } else {
       res.status(401).json({
-        message: 'access_failed',
+        message: 'unauthorized_access',
       });
     }
   } else {
     res.status(401).json({
-      message: 'access_failed',
+      message: 'unauthorized_access',
     });
   }
 };
 
-export default { authWithEmailVerified };
+export default authWithEmailVerified
