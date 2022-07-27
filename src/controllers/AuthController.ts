@@ -140,9 +140,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode &&
-        Number(req.body.verificationCode) ===
-          Number(req.session.verificationCode)
+        req.session.verificationCode
+        && Number(req.body.verificationCode)
+          === Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -195,8 +195,6 @@ router.post(
         email,
       );
 
-      await user.save();
-
       return res
         .status(200)
         .json({ message: 'Password reset code has been sent ' });
@@ -209,13 +207,12 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode &&
-      Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode
+      && Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
-      res.status(200).json({ message: 'Verified sucessfully' });
-    } else {
-      res.status(400).json({ message: 'Wrong reset code provided' });
+      return res.status(200).json({ message: 'Verified sucessfully' });
     }
+    return res.status(400).json({ message: 'Wrong reset code provided' });
   } catch (error) {
     return res.status(500).json({
       message: 'Something went wrong! please try again later',
@@ -258,13 +255,11 @@ router.post(
         .status(400)
         .json({ message: 'Enter a valid password and try again.' });
     } catch (error) {
-      return res
-        .status(500)
-        .json({
-          message:
-            'Something went wrong trying to change your password please try again later',
-          error,
-        });
+      return res.status(500).json({
+        message:
+          'Something went wrong trying to change your password please try again later',
+        error,
+      });
     }
   },
 );
