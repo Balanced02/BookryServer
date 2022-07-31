@@ -35,4 +35,4 @@ const authWithEmailVerified = async (
   }
 };
 
-export default authWithEmailVerified
+export default authWithEmailVerified;

@@ -20,8 +20,8 @@ const validateToken = async (
         next();
       } else {
         res
-      .status(401)
-      .json({ message: 'unauthorized_access' });
+          .status(401)
+          .json({ message: 'unauthorized_access' });
       }
     }
   } else {
