@@ -31,12 +31,12 @@ const BookSchema = new Schema<IBook>({
     type: String,
     trim: true,
     required: true,
-    minLength: 4
+    minLength: 4,
   },
   description: {
     type: String,
     trim: true,
-    minLength: 25
+    minLength: 25,
   },
   coverImage: {
     type: String,
@@ -51,13 +51,12 @@ const BookSchema = new Schema<IBook>({
   },
   chapters: {
     type: Array<Schema.Types.ObjectId>,
-    ref: 'Chapter'
+    ref: 'Chapter',
   },
   created: {
     type: Date,
     default: Date.now,
   },
 });
-
 
 export default mongoose.model('Book', BookSchema);

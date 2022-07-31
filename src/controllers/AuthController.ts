@@ -56,11 +56,11 @@ router.post(
           .json({ message: 'A user with that email address already exists' });
       }
 
-      const user = new User({ fullName, email })
+      const user = new User({ fullName, email });
 
       const salt: string = await bcrypt.genSalt(10);
 
-      user.password = bcrypt.hashSync(password, salt) 
+      user.password = bcrypt.hashSync(password, salt);
 
       const verificationCode = Math.floor(Math.random() * 100000);
 
@@ -68,7 +68,7 @@ router.post(
 
       await user.save();
 
-      console.log('verificationCode', verificationCode)
+      console.log('verificationCode', verificationCode);
 
       // mailingService(
       //   'Confirm Email',
@@ -124,7 +124,7 @@ router.post(
       const verificationCode = Math.floor(Math.random() * 100000);
 
       req.session.verificationCode = verificationCode;
-      console.log('verificationCode', verificationCode)
+      console.log('verificationCode', verificationCode);
 
       // mailingService(
       //   'Confirm Email',
@@ -198,9 +198,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode &&
-        Number(req.body.verificationCode) ===
-          Number(req.session.verificationCode)
+        req.session.verificationCode
+        && Number(req.body.verificationCode)
+          === Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -215,7 +215,7 @@ router.post(
         );
         if (!user) {
           return res.status(400).json({ message: 'user_not_found' });
-        };
+        }
         user.password = '';
         return res.status(200).json({ message: 'email_verified', data: user });
       }
@@ -247,7 +247,7 @@ router.post(
       const resetCode = Math.floor(Math.random() * 100000);
 
       req.session.resetCode = resetCode;
-      console.log('resetCode', resetCode)
+      console.log('resetCode', resetCode);
 
       // mailingService(
       //   'Password Reset Code',
@@ -267,8 +267,8 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode &&
-      Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode
+      && Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
       res.status(200).json({ message: 'verified' });
     } else {
@@ -309,7 +309,7 @@ router.post(
         );
         if (!user) {
           return res.status(400).json({ message: 'user_not_found' });
-        };
+        }
         user.password = '';
         return res
           .status(200)

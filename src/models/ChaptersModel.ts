@@ -12,13 +12,13 @@ const ChaptersSchema = new Schema<IChapter>({
     type: String,
     trim: true,
     required: true,
-    minLength: 4
+    minLength: 4,
   },
   description: {
     type: String,
     trim: true,
     required: true,
-    minLength: 25
+    minLength: 25,
   },
   body: {
     type: String,
@@ -30,6 +30,5 @@ const ChaptersSchema = new Schema<IChapter>({
     default: Date.now,
   },
 });
-
 
 export default mongoose.model('Chapter', ChaptersSchema);
