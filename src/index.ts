@@ -3,12 +3,25 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import session from 'express-session';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import router from './routes/v1';
 import connectDb from './config/connectDb';
 import './environment';
 
 dotenv.config();
 const app: Application = express();
+
+app.use(
+  cors({
+    credentials: true,
+    origin: '*',
+  }),
+);
+
+const corsList = {
+  origin: [process.env.FRONTEND_ORIGN, 'http://localhost:3000'],
+  default: process.env.FRONTEND_ORIGN,
+};
 
 Sentry.init({
   dsn: process.env.sentryDNS,
@@ -34,9 +47,15 @@ connectDb();
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.header('Access-Control-Allow-Credentials', 'true');
+app.all('*', (req: Request, res: Response, next) => {
+  const origin = corsList.origin.includes(req.headers.origin)
+    ? req.headers.origin
+    : corsList.default;
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept',
+  );
   res.header(
     'Access-Control-Allow-Methods',
     'GET, POST, OPTIONS, PUT, PATCH, DELETE',
