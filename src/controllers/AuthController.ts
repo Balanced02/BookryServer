@@ -270,10 +270,9 @@ router.post('/verifyCode', (req: Request, res: Response) => {
       req.session.resetCode
       && Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
-      res.status(200).json({ message: 'verified' });
-    } else {
-      res.status(400).json({ message: 'token_invalid' });
+      return res.status(200).json({ message: 'verified' });
     }
+    return res.status(400).json({ message: 'token_invalid' });
   } catch (error) {
     return res.status(500).json({
       message: 'server_error',
