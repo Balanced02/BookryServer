@@ -21,13 +21,16 @@ const validateToken = async (
       } else {
         res
           .status(401)
-          .json({ message: 'unauthorized_access' });
+          .json({
+            message: 'unauthorized_access',
+            error: ['unauthorized access'],
+          });
       }
     }
   } else {
     res
       .status(401)
-      .json({ message: 'unauthorized_access' });
+      .json({ message: 'unauthorized_access', error: ['unauthorized access'] });
   }
 };
 export default validateToken;

@@ -49,11 +49,15 @@ router.post(
         return res.status(400).json(formatValidationMessages(errors.array()));
       }
       const { email, password, fullName } = req.body;
-      const isUserCreated = await User.findOne({ email, userType: 'super-admin' });
+      const isUserCreated = await User.findOne({
+        email,
+        userType: 'super-admin',
+      });
       if (isUserCreated) {
-        return res
-          .status(409)
-          .json({ message: 'A user with that email address already exists' });
+        return res.status(409).json({
+          message: 'user exist',
+          error: ['A user with that email address already exists'],
+        });
       }
 
       const user = new User({ fullName, email });
@@ -85,9 +89,11 @@ router.post(
 
       const token = jwt.sign(payload, process.env.jwtSecret);
 
-      return res
-        .status(200)
-        .json({ message: 'New user created successfully ', token, data: { fullName: user.fullName, email: user.email } });
+      return res.status(200).json({
+        message: 'New user created successfully ',
+        token,
+        data: { fullName: user.fullName, email: user.email },
+      });
     } catch (error) {
       return res.status(500).json({ message: 'Server error', error });
     }
@@ -110,7 +116,10 @@ router.post(
       const { email, password, fullName } = req.body;
       const isUserCreated = await User.findOne({ email });
       if (isUserCreated) {
-        return res.status(409).json({ message: 'email_exist' });
+        return res.status(409).json({
+          message: 'email_exist',
+          error: ['A user with that email address already exists'],
+        });
       }
 
       const user = new User({ fullName, email });
@@ -168,6 +177,7 @@ router.post(
       if (!user || !user.comparePassword(password)) {
         return res.status(401).json({
           message: 'invalid_credentials',
+          error: ['invalid login details'],
         });
       }
 
@@ -183,8 +193,8 @@ router.post(
         token: jwt.sign(payload, process.env.jwtSecret, {
           expiresIn: 15768000,
         }),
-        data: user,
         message: user.isEmailVerified ? 'greet_user' : 'verify_account',
+        data: user,
       });
     } catch (error) {
       return res.status(500).json({ message: 'server_error', error });
@@ -198,9 +208,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       if (
-        req.session.verificationCode
-        && Number(req.body.verificationCode)
-          === Number(req.session.verificationCode)
+        req.session.verificationCode &&
+        Number(req.body.verificationCode) ===
+          Number(req.session.verificationCode)
       ) {
         const user = await User.findByIdAndUpdate(
           req.user._id,
@@ -214,12 +224,16 @@ router.post(
           },
         );
         if (!user) {
-          return res.status(400).json({ message: 'user_not_found' });
+          return res
+            .status(400)
+            .json({ message: 'user_not_found', error: ['user not found'] });
         }
         user.password = '';
         return res.status(200).json({ message: 'email_verified', data: user });
       }
-      return res.status(400).json({ message: 'token_invalid' });
+      return res
+        .status(400)
+        .json({ message: 'token_invalid', error: ['token not valid'] });
     } catch (error) {
       return res.status(500).json({
         message: 'Something went wrong! please try again later',
@@ -241,7 +255,10 @@ router.post(
       const { email } = req.body;
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(404).json({ message: 'Invalid email address!' });
+        return res.status(404).json({
+          message: 'Invalid email address!',
+          error: ['email not registered'],
+        });
       }
 
       const resetCode = Math.floor(Math.random() * 100000);
@@ -257,7 +274,9 @@ router.post(
 
       await user.save();
 
-      return res.status(200).json({ message: 'reset_token_sent' });
+      return res
+        .status(200)
+        .json({ message: 'reset_token_sent', data: ['reset code sent'] });
     } catch (error) {
       return res.status(500).json({ message: 'server_error', error });
     }
@@ -267,12 +286,14 @@ router.post(
 router.post('/verifyCode', (req: Request, res: Response) => {
   try {
     if (
-      req.session.resetCode
-      && Number(req.body.resetCode) === Number(req.session.resetCode)
+      req.session.resetCode &&
+      Number(req.body.resetCode) === Number(req.session.resetCode)
     ) {
-      return res.status(200).json({ message: 'verified' });
+      return res.status(200).json({ message: 'verified', data: ['verified'] });
     }
-    return res.status(400).json({ message: 'token_invalid' });
+    return res
+      .status(400)
+      .json({ message: 'token_invalid', error: ['invalid token'] });
   } catch (error) {
     return res.status(500).json({
       message: 'server_error',
@@ -307,14 +328,18 @@ router.post(
           },
         );
         if (!user) {
-          return res.status(400).json({ message: 'user_not_found' });
+          return res
+            .status(400)
+            .json({ message: 'user_not_found', error: ['user not found'] });
         }
         user.password = '';
         return res
           .status(200)
           .json({ message: 'password_reset_success', user });
       }
-      return res.status(400).json({ message: 'password_invalid' });
+      return res
+        .status(400)
+        .json({ message: 'password_invalid', error: ['password not valid'] });
     } catch (error) {
       return res.status(500).json({
         message: 'server_error',

@@ -22,21 +22,25 @@ const emailNotVerified = async (
         } else {
           res.status(200).json({
             message: 'verified',
+            data: ['verified'],
           });
         }
       } else {
         res.status(401).json({
           message: 'unauthorized_access',
+          error: ['unauthorized access'],
         });
       }
     } else {
       res.status(401).json({
         message: 'token_invalid',
+        error: [' token invalid'],
       });
     }
   } catch (error) {
     res.status(401).json({
       message: 'unauthorized_access',
+      error: ['unauthorized access'],
     });
   }
 };
